@@ -1,0 +1,68 @@
+# --------------------------------------------------------------------------------
+# Number of Weaviate pods
+# --------------------------------------------------------------------------------
+replicaCount: 3
+
+# --------------------------------------------------------------------------------
+# Weaviate Docker Image
+# --------------------------------------------------------------------------------
+image:
+  repository: semitechnologies/weaviate
+  # For production, pin the version you want:
+  tag: v1.20.0
+  pullPolicy: IfNotPresent
+
+# --------------------------------------------------------------------------------
+# Persistence
+# --------------------------------------------------------------------------------
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: gp3  # Matches our custom StorageClass created in main.tf
+
+# --------------------------------------------------------------------------------
+# Environment Variables
+# --------------------------------------------------------------------------------
+env:
+  - name: QUERY_DEFAULTS_LIMIT
+    value: "25"
+  - name: AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED
+    value: "true"
+  - name: PERSISTENCE_DATA_PATH
+    value: "/var/lib/weaviate"
+
+  # S3 backups (example) — ensure IAM roles or access keys are properly configured:
+  - name: BACKUP_S3_BUCKET
+    value: "my-weaviate-backups"
+  - name: BACKUP_S3_ENDPOINT
+    value: "s3.amazonaws.com"
+  - name: BACKUP_S3_REGION
+    value: "us-east-1"
+
+# --------------------------------------------------------------------------------
+# Probes
+# --------------------------------------------------------------------------------
+livenessProbe:
+  enabled: true
+readinessProbe:
+  enabled: true
+
+# --------------------------------------------------------------------------------
+# Service Configuration
+# --------------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+# --------------------------------------------------------------------------------
+# Ingress
+# --------------------------------------------------------------------------------
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: weaviate.my-domain.com
+      paths:
+        - /
+  tls: []
