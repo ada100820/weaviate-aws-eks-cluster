@@ -2,26 +2,28 @@
 # EKS CLUSTER
 #################################################
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "~> 18.0"
+  source  = "terraform-aws-modules/eks/aws"
+  # Make sure we're on 18.x or higher
+  version = "~> 18.0"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  # Use the new VPC
-  vpc_id  = module.vpc.vpc_id
-  subnets = module.vpc.private_subnets
+  # The cluster control plane
+  vpc_id    = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
-  node_groups_defaults = {
-    desired_capacity = var.desired_capacity
-    max_capacity     = var.max_capacity
-    min_capacity     = 1
-  }
-
-  node_groups = {
+  # Managed node groups
+  eks_managed_node_groups = {
     default = {
-      instance_types = [var.instance_type]
-      subnets        = module.vpc.private_subnets
+      name              = "default"
+      instance_types    = [var.instance_type]
+      desired_capacity  = var.desired_capacity
+      max_capacity      = var.max_capacity
+      min_capacity      = 1
+      # By default, the node groups also use 'subnet_ids' from above
+      # but you can override them here if needed:
+      # subnets        = module.vpc.private_subnets
     }
   }
 }
@@ -70,17 +72,17 @@ resource "helm_release" "weaviate" {
   chart      = "weaviate"
   namespace  = kubernetes_namespace.weaviate.metadata[0].name
 
-  # Pin the chart version or keep it flexible
+  # Pin or set version - adjust as needed
   version    = "0.6.2"
 
-  # Reference local values.yaml
+  # Use your local values.yaml
   values = [
     file("${path.module}/values.yaml")
   ]
 
   depends_on = [
-    module.eks, 
-    kubernetes_storage_class.gp3, 
+    module.eks,
+    kubernetes_storage_class.gp3,
     kubernetes_namespace.weaviate
   ]
 }
