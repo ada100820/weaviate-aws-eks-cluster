@@ -1,28 +1,19 @@
-# --------------------------------------------------------------------------------
 # Number of Weaviate Pods
-# --------------------------------------------------------------------------------
 replicaCount: 3
 
-# --------------------------------------------------------------------------------
 # Weaviate Docker Image
-# --------------------------------------------------------------------------------
 image:
   repository: semitechnologies/weaviate
-  # For production, pin the version carefully, e.g.:
   tag: v1.20.0
   pullPolicy: IfNotPresent
 
-# --------------------------------------------------------------------------------
-# Persistence (PVC)
-# --------------------------------------------------------------------------------
+# Persistence
 persistence:
   enabled: true
   size: 50Gi
-  storageClass: gp3  # Must match the name in our StorageClass resource
+  storageClass: gp3  # matches the custom SC name in main.tf
 
-# --------------------------------------------------------------------------------
 # Environment Variables
-# --------------------------------------------------------------------------------
 env:
   - name: QUERY_DEFAULTS_LIMIT
     value: "25"
@@ -31,33 +22,27 @@ env:
   - name: PERSISTENCE_DATA_PATH
     value: "/var/lib/weaviate"
 
-  # (Optional) S3 backups, if you configure IAM perms or credentials:
+  # Optional S3 backups:
   - name: BACKUP_S3_BUCKET
     value: "my-weaviate-backups"
   - name: BACKUP_S3_ENDPOINT
     value: "s3.amazonaws.com"
   - name: BACKUP_S3_REGION
-    value: "us-east-1"
+    value: "ap-south-1"
 
-# --------------------------------------------------------------------------------
 # Liveness & Readiness Probes
-# --------------------------------------------------------------------------------
 livenessProbe:
   enabled: true
 readinessProbe:
   enabled: true
 
-# --------------------------------------------------------------------------------
 # Service
-# --------------------------------------------------------------------------------
 service:
   type: ClusterIP
   port: 8080
   annotations: {}
 
-# --------------------------------------------------------------------------------
 # Ingress (Optional)
-# --------------------------------------------------------------------------------
 ingress:
   enabled: false
   annotations: {}
