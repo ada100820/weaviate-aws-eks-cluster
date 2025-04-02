@@ -1,26 +1,27 @@
 #################################################
-# EKS CLUSTER CREATION
+# EKS CLUSTER
 #################################################
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "~> 18.0"
 
   cluster_name    = var.cluster_name
-  cluster_version = "1.25"
+  cluster_version = var.cluster_version
 
-  vpc_id          = var.vpc_id
-  subnets         = var.private_subnets
+  # Use the new VPC
+  vpc_id  = module.vpc.vpc_id
+  subnets = module.vpc.private_subnets
 
   node_groups_defaults = {
     desired_capacity = var.desired_capacity
-    max_capacity     = var.desired_capacity + 2
+    max_capacity     = var.max_capacity
     min_capacity     = 1
   }
 
   node_groups = {
     default = {
       instance_types = [var.instance_type]
-      subnets        = var.private_subnets
+      subnets        = module.vpc.private_subnets
     }
   }
 }
@@ -52,7 +53,7 @@ resource "kubernetes_storage_class" "gp3" {
 }
 
 #################################################
-# CREATE NAMESPACE FOR WEAVIATE
+# KUBERNETES NAMESPACE FOR WEAVIATE
 #################################################
 resource "kubernetes_namespace" "weaviate" {
   metadata {
@@ -61,7 +62,7 @@ resource "kubernetes_namespace" "weaviate" {
 }
 
 #################################################
-# HELM RELEASE FOR WEAVIATE
+# HELM RELEASE (Weaviate)
 #################################################
 resource "helm_release" "weaviate" {
   name       = "weaviate"
@@ -69,22 +70,17 @@ resource "helm_release" "weaviate" {
   chart      = "weaviate"
   namespace  = kubernetes_namespace.weaviate.metadata[0].name
 
-  # Pin the version for stability; adjust as needed:
+  # Pin the chart version or keep it flexible
   version    = "0.6.2"
 
-  # Reference your local values.yaml
+  # Reference local values.yaml
   values = [
     file("${path.module}/values.yaml")
   ]
 
-  # If you want to override specific values via Terraform rather than values.yaml:
-  # set {
-  #   name  = "replicaCount"
-  #   value = "3"
-  # }
-
   depends_on = [
-    kubernetes_storage_class.gp3,
+    module.eks, 
+    kubernetes_storage_class.gp3, 
     kubernetes_namespace.weaviate
   ]
 }
