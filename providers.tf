@@ -21,6 +21,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+# These data sources require the EKS cluster to exist,
+# so you'll see them used in main.tf after the cluster is created
 provider "helm" {
   kubernetes {
     host                   = data.aws_eks_cluster.this.endpoint
