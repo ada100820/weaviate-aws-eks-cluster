@@ -3,27 +3,20 @@
 #################################################
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  # Make sure we're on 18.x or higher
   version = "~> 18.0"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  # The cluster control plane
   vpc_id    = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  # Managed node groups
   eks_managed_node_groups = {
     default = {
-      name              = "default"
-      instance_types    = [var.instance_type]
-      desired_capacity  = var.desired_capacity
-      max_capacity      = var.max_capacity
-      min_capacity      = 1
-      # By default, the node groups also use 'subnet_ids' from above
-      # but you can override them here if needed:
-      # subnets        = module.vpc.private_subnets
+      instance_types   = [var.instance_type]
+      desired_capacity = var.desired_capacity
+      max_capacity     = var.max_capacity
+      min_capacity     = 1
     }
   }
 }
@@ -37,7 +30,7 @@ data "aws_eks_cluster_auth" "this" {
 }
 
 #################################################
-# (OPTIONAL) CUSTOM STORAGE CLASS FOR gp3
+# (OPTIONAL) CUSTOM STORAGE CLASS FOR GP3
 #################################################
 resource "kubernetes_storage_class" "gp3" {
   metadata {
@@ -55,7 +48,7 @@ resource "kubernetes_storage_class" "gp3" {
 }
 
 #################################################
-# KUBERNETES NAMESPACE FOR WEAVIATE
+# NAMESPACE FOR WEAVIATE
 #################################################
 resource "kubernetes_namespace" "weaviate" {
   metadata {
@@ -72,10 +65,13 @@ resource "helm_release" "weaviate" {
   chart      = "weaviate"
   namespace  = kubernetes_namespace.weaviate.metadata[0].name
 
-  # Pin or set version - adjust as needed
-   version    = "17.1.0"
+  # Example pin. Adjust to the chart version you want.
+  version    = "17.1.0"
 
-  # Use your local values.yaml
+  # Increase the timeout in case Weaviate or the volume provisioning takes >5min
+  timeout    = 600
+
+  # Use your local values.yaml for Weaviate configuration
   values = [
     file("${path.module}/values.yaml")
   ]
