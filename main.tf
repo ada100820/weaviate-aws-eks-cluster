@@ -73,7 +73,7 @@ resource "helm_release" "weaviate" {
   namespace  = kubernetes_namespace.weaviate.metadata[0].name
 
   # Pin or set version - adjust as needed
-  version    = "0.6.2"
+   version    = "17.1.0"
 
   # Use your local values.yaml
   values = [
