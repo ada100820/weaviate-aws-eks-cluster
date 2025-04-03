@@ -29,6 +29,13 @@ env:
     value: "s3.amazonaws.com"
   - name: BACKUP_S3_REGION
     value: "ap-south-1"
+    # Raft variables for multi-replica
+  - name: RAFT_BOOTSTRAP_EXPECT
+    value: "3"
+  # - name: RAFT_ENABLED
+  #   value: "true"       <-- Some versions might require this
+  # - name: CLUSTER_HOSTNAME
+  #   value: "weaviate"
 
 # Liveness & Readiness Probes
 livenessProbe:
